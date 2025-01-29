@@ -33,10 +33,6 @@ func NewClient(token string) (*APIClient, error) {
 
 // ChatCompletion sends a request to the chat API and returns the response.
 func (c *APIClient) ChatCompletion(payload ChatCompletionRequest) (*ChatCompletionResponse, error) {
-	if c.token == "" {
-		return nil, errors.New("token cannot be empty")
-	}
-
 	url := fmt.Sprintf("%s%s", baseURL, chatCompletion)
 
 	resp, err := c.doRequest(http.MethodPost, url, payload)
