@@ -59,11 +59,11 @@ func (c *APIClient) ChatCompletion(payload ChatCompletionRequest) (*ChatCompleti
 func (c *APIClient) ListModel() (*ListModelResponse, error) {
 	url := fmt.Sprintf("%s%s", baseURL, listModel)
 
-    resp, err := c.doRequest(http.MethodPost, url, nil)
+	resp, err := c.doRequest(http.MethodPost, url, nil)
 	if err != nil {
 		return nil, err
 	}
-    defer resp.Body.Close()
+	defer resp.Body.Close()
 
 	var models ListModelResponse
 	if err := json.NewDecoder(resp.Body).Decode(&models); err != nil {
@@ -75,34 +75,34 @@ func (c *APIClient) ListModel() (*ListModelResponse, error) {
 
 // doRequest sends an HTTP request with the given method and payload.
 func (c *APIClient) doRequest(method, url string, payload any) (*http.Response, error) {
-    var body io.Reader
-    if payload != nil {
-        switch v := payload.(type) {
-        case io.Reader:
-            // Directly use an io.Reader (e.g., for files/streams)
-            body = v
-        default:
-            // Marshal JSON for other types
-            payloadBytes, err := json.Marshal(v)
-            if err != nil {
-                return nil, fmt.Errorf("failed to marshal request payload: %w", err)
-            }
-            body = bytes.NewReader(payloadBytes)
-        }
-    }
+	var body io.Reader
+	if payload != nil {
+		switch v := payload.(type) {
+		case io.Reader:
+			// Directly use an io.Reader (e.g., for files/streams)
+			body = v
+		default:
+			// Marshal JSON for other types
+			payloadBytes, err := json.Marshal(v)
+			if err != nil {
+				return nil, fmt.Errorf("failed to marshal request payload: %w", err)
+			}
+			body = bytes.NewReader(payloadBytes)
+		}
+	}
 
-    req, err := http.NewRequest(method, url, body)
+	req, err := http.NewRequest(method, url, body)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create request: %w", err)
 	}
 
-    // Set Headers
+	// Set Headers
 	req.Header.Set("Accept", "application/json")
 	req.Header.Set("Authorization", "Bearer "+c.token)
-    if body != nil && !isStream(payload) {
-        // Only set Content-Type for non-streaming JSON payloads
-        req.Header.Set("Content-Type", "application/json")
-    }
+	if body != nil && !isStream(payload) {
+		// Only set Content-Type for non-streaming JSON payloads
+		req.Header.Set("Content-Type", "application/json")
+	}
 
 	resp, err := c.client.Do(req)
 	if err != nil {
@@ -110,7 +110,7 @@ func (c *APIClient) doRequest(method, url string, payload any) (*http.Response, 
 	}
 
 	if resp.StatusCode != http.StatusOK {
-        defer resp.Body.Close() // close body on error
+		defer resp.Body.Close() // close body on error
 		return nil, fmt.Errorf("unexpected status code: %d", resp.StatusCode)
 	}
 
@@ -119,6 +119,6 @@ func (c *APIClient) doRequest(method, url string, payload any) (*http.Response, 
 
 // isStream checks if the payload is an io.Reader (streaming).
 func isStream(payload any) bool {
-    _, ok := payload.(io.Reader)
-    return ok
+	_, ok := payload.(io.Reader)
+	return ok
 }
