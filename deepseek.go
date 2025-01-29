@@ -58,28 +58,34 @@ func (c *APIClient) ChatCompletion(payload ChatCompletionRequest) (*ChatCompleti
 
 // doRequest sends an HTTP request with the given method and payload.
 func (c *APIClient) doRequest(method, url string, payload any) (*http.Response, error) {
-	var payloadBytes []byte
-	var req *http.Request
-	var err error
+    var body io.Reader
+    if payload != nil {
+        switch v := payload.(type) {
+        case io.Reader:
+            // Directly use an io.Reader (e.g., for files/streams)
+            body = v
+        default:
+            // Marshal JSON for other types
+            payloadBytes, err := json.Marshal(v)
+            if err != nil {
+                return nil, fmt.Errorf("failed to marshal request payload: %w", err)
+            }
+            body = bytes.NewReader(payloadBytes)
+        }
+    }
 
-	if payload == nil {
-		req, err = http.NewRequest(method, url, nil)
-	} else {
-		payloadBytes, err = json.Marshal(payload)
-		if err != nil {
-			return nil, fmt.Errorf("failed to marshal request payload: %w", err)
-		}
-
-		req, err = http.NewRequest(method, url, bytes.NewBuffer(payloadBytes))
-		req.Header.Set("Content-Type", "application/json")
-	}
-
+    req, err := http.NewRequest(method, url, body)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create request: %w", err)
 	}
 
+    // Set Headers
 	req.Header.Set("Accept", "application/json")
 	req.Header.Set("Authorization", "Bearer "+c.token)
+    if body != nil && !isStream(payload) {
+        // Only set Content-Type for non-streaming JSON payloads
+        req.Header.Set("Content-Type", "application/json")
+    }
 
 	resp, err := c.client.Do(req)
 	if err != nil {
@@ -92,4 +98,10 @@ func (c *APIClient) doRequest(method, url string, payload any) (*http.Response, 
 	}
 
 	return resp, nil
+}
+
+// isStream checks if the payload is an io.Reader (streaming).
+func isStream(payload any) bool {
+    _, ok := payload.(io.Reader)
+    return ok
 }
