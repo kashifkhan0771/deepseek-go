@@ -58,17 +58,26 @@ func (c *APIClient) ChatCompletion(payload ChatCompletionRequest) (*ChatCompleti
 
 // doRequest sends an HTTP request with the given method and payload.
 func (c *APIClient) doRequest(method, url string, payload any) (*http.Response, error) {
-	payloadBytes, err := json.Marshal(payload)
-	if err != nil {
-		return nil, fmt.Errorf("failed to marshal request payload: %w", err)
+	var payloadBytes []byte
+	var req *http.Request
+	var err error
+
+	if payload == nil {
+		req, err = http.NewRequest(method, url, nil)
+	} else {
+		payloadBytes, err = json.Marshal(payload)
+		if err != nil {
+			return nil, fmt.Errorf("failed to marshal request payload: %w", err)
+		}
+
+		req, err = http.NewRequest(method, url, bytes.NewBuffer(payloadBytes))
+		req.Header.Set("Content-Type", "application/json")
 	}
 
-	req, err := http.NewRequest(method, url, bytes.NewBuffer(payloadBytes))
 	if err != nil {
 		return nil, fmt.Errorf("failed to create request: %w", err)
 	}
 
-	req.Header.Set("Content-Type", "application/json")
 	req.Header.Set("Accept", "application/json")
 	req.Header.Set("Authorization", "Bearer "+c.token)
 
