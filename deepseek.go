@@ -52,7 +52,7 @@ func (c *APIClient) ChatCompletion(payload ChatCompletionRequest) (*ChatCompleti
 func (c *APIClient) ListModel() (*ListModelResponse, error) {
 	url := fmt.Sprintf("%s%s", baseURL, listModel)
 
-	resp, err := c.doRequest(http.MethodPost, url, nil)
+	resp, err := c.doRequest(http.MethodGet, url, nil)
 	if err != nil {
 		return nil, err
 	}
