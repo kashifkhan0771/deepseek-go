@@ -37,7 +37,7 @@ func (c *APIClient) ChatCompletion(payload ChatCompletionRequest) (*ChatCompleti
 		return nil, errors.New("token cannot be empty")
 	}
 
-	url := fmt.Sprintf("%s%s", BaseURL, ChatComletion)
+	url := fmt.Sprintf("%s%s", baseURL, chatCompletion)
 
 	resp, err := c.doRequest(http.MethodPost, url, payload)
 	if err != nil {
