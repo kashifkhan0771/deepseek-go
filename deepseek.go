@@ -56,6 +56,23 @@ func (c *APIClient) ChatCompletion(payload ChatCompletionRequest) (*ChatCompleti
 	return &chat, nil
 }
 
+func (c *APIClient) ListModel() (*ListModelResponse, error) {
+	url := fmt.Sprintf("%s%s", baseURL, listModel)
+
+    resp, err := c.doRequest(http.MethodPost, url, nil)
+	if err != nil {
+		return nil, err
+	}
+    defer resp.Body.Close()
+
+	var models ListModelResponse
+	if err := json.NewDecoder(resp.Body).Decode(&models); err != nil {
+		return nil, fmt.Errorf("failed to decode response: %w", err)
+	}
+
+	return &models, nil
+}
+
 // doRequest sends an HTTP request with the given method and payload.
 func (c *APIClient) doRequest(method, url string, payload any) (*http.Response, error) {
     var body io.Reader
