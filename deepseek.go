@@ -5,75 +5,74 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"io"
 	"net/http"
 	"time"
 )
 
-var (
-	client = makeHTTPClient()
-)
-
-// DeepSeekConfig has the configurations required to call the APIs
-type DeepSeekConfig struct {
-	// Token can be obtained from: https://platform.deepseek.com/api_keys
-	Token string
+// APIClient handles communication with the DeepSeek APIs.
+type APIClient struct {
+	// token can be obtained from: https://platform.deepseek.com/api_keys
+	token  string
+	client *http.Client
 }
 
-// NewDeepSeekConfig creates a DeepSeek config with token passed.
-func NewDeepSeekConfig(token string) (*DeepSeekConfig, error) {
+// NewClient initializes an API client.
+func NewClient(token string) (*APIClient, error) {
 	if token == "" {
-		return nil, errors.New("Token key cannot be empty")
+		return nil, errors.New("token cannot be empty")
 	}
 
-	return &DeepSeekConfig{
-		Token: token,
+	return &APIClient{
+		token: token,
+		client: &http.Client{
+			Timeout: 5 * time.Second,
+		},
 	}, nil
 }
 
-// ChatCompletion return a model response for the given chat conversation.
-func (d DeepSeekConfig) ChatCompletion(payload ChatCompletionRequest) (*ChatCompletionResponse, error) {
-	if d.Token == "" {
-		return nil, errors.New("token cannot be empty in config")
+// ChatCompletion sends a request to the chat API and returns the response.
+func (c *APIClient) ChatCompletion(payload ChatCompletionRequest) (*ChatCompletionResponse, error) {
+	if c.token == "" {
+		return nil, errors.New("token cannot be empty")
 	}
 
 	url := fmt.Sprintf("%s%s", BaseURL, ChatComletion)
 
-	// marshal the request payload to JSON
-	payloadBytes, err := json.Marshal(payload)
+	resp, err := c.doRequest(http.MethodPost, url, payload)
 	if err != nil {
 		return nil, err
 	}
+	defer func() {
+		_, _ = io.Copy(io.Discard, resp.Body)
+		_ = resp.Body.Close()
+	}()
 
-	resp, err := d.makeRequest(http.MethodGet, url, payloadBytes)
-	if err != nil {
-		return nil, err
-	}
-
-	defer resp.Body.Close()
-
-	// decode JSON response body
 	var chat ChatCompletionResponse
-	err = json.NewDecoder(resp.Body).Decode(&chat)
-	if err != nil {
-		return nil, err
+	if err := json.NewDecoder(resp.Body).Decode(&chat); err != nil {
+		return nil, fmt.Errorf("failed to decode response: %w", err)
 	}
 
 	return &chat, nil
 }
 
-// makeRequest is a helper function for making API requests.
-func (d DeepSeekConfig) makeRequest(method, url string, payload []byte) (*http.Response, error) {
-	req, err := http.NewRequest(method, url, bytes.NewBuffer(payload))
+// doRequest sends an HTTP request with the given method and payload.
+func (c *APIClient) doRequest(method, url string, payload any) (*http.Response, error) {
+	payloadBytes, err := json.Marshal(payload)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to marshal request payload: %w", err)
+	}
+
+	req, err := http.NewRequest(method, url, bytes.NewBuffer(payloadBytes))
+	if err != nil {
+		return nil, fmt.Errorf("failed to create request: %w", err)
 	}
 
 	req.Header.Set("Content-Type", "application/json")
 	req.Header.Set("Accept", "application/json")
-	req.Header.Set("Authorization", fmt.Sprintf("Bearer %s", d.Token))
+	req.Header.Set("Authorization", "Bearer "+c.token)
 
-	// Send request
-	resp, err := client.Do(req)
+	resp, err := c.client.Do(req)
 	if err != nil {
 		return nil, fmt.Errorf("HTTP request failed: %w", err)
 	}
@@ -83,10 +82,4 @@ func (d DeepSeekConfig) makeRequest(method, url string, payload []byte) (*http.R
 	}
 
 	return resp, nil
-}
-
-func makeHTTPClient() *http.Client {
-	return &http.Client{
-		Timeout: 5 * time.Second,
-	}
 }
