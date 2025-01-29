@@ -22,3 +22,15 @@ type Usage struct {
 	PromptTokens     int `json:"prompt_tokens"`
 	TotalTokens      int `json:"total_tokens"`
 }
+
+// ListModelResponse is the response from /models API
+type ListModelResponse struct {
+	Object string      `json:"object"`
+	Data   []ModelData `json:"data"`
+}
+
+type ModelData struct {
+	ID      string `json:"id"`
+	Object  string `json:"object"`
+	OwnedBy string `json:"owned_by"`
+}
