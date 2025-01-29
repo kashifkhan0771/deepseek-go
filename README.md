@@ -9,15 +9,15 @@ import (
 	"fmt"
 	"log"
 
-	"github.com/kashifkhan0771/deepseek-go"
+	deepseek "github.com/kashifkhan0771/deepseek-go"
 )
 
 func main() {
 	// Replace "your-api-token" with your actual DeepSeek API token
 	token := "your-api-token"
 
-	// Create a new DeepSeekConfig instance
-	config, err := deepseek.NewDeepSeekConfig(token)
+	// Create a new deepseek client
+	client, err := deepseek.NewClient(token)
 	if err != nil {
 		log.Fatalf("Failed to create DeepSeek config: %v", err)
 	}
@@ -35,7 +35,7 @@ func main() {
 	}
 
 	// Call the ChatCompletion method
-	response, err := config.ChatCompletion(payload)
+	response, err := client.ChatCompletion(payload)
 	if err != nil {
 		log.Fatalf("Failed to get chat completion: %v", err)
 	}
