@@ -39,10 +39,7 @@ func (c *APIClient) ChatCompletion(payload ChatCompletionRequest) (*ChatCompleti
 	if err != nil {
 		return nil, err
 	}
-	defer func() {
-		_, _ = io.Copy(io.Discard, resp.Body)
-		_ = resp.Body.Close()
-	}()
+	defer resp.Body.Close()
 
 	var chat ChatCompletionResponse
 	if err := json.NewDecoder(resp.Body).Decode(&chat); err != nil {
