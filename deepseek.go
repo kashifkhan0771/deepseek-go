@@ -87,6 +87,7 @@ func (c *APIClient) doRequest(method, url string, payload any) (*http.Response, 
 	}
 
 	if resp.StatusCode != http.StatusOK {
+        defer resp.Body.Close() // close body on error
 		return nil, fmt.Errorf("unexpected status code: %d", resp.StatusCode)
 	}
 
