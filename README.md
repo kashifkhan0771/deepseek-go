@@ -40,7 +40,16 @@ func main() {
 		log.Fatalf("Failed to get chat completion: %v", err)
 	}
 
-	// Print the response from the API
+    // Call the ListModel method
+	response2, err := client.ListModel()
+    if err != nil {
+		log.Fatalf("Failed to get list of available models: %v", err)
+    }
+
+	// Print the responses from the API
 	fmt.Println("Chat Completion Response:")
 	fmt.Println(response.Choices[0].Message.Content)
+
+	fmt.Println("List Model Response:")
+	fmt.Println(response2.Data[0].ID)
 }
