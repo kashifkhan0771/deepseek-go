@@ -6,5 +6,5 @@ const (
 
 	// API endpoints
 	chatCompletion = "/chat/completions"
-    listModel = "/models"
+	listModel      = "/models"
 )
